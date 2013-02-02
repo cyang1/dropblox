@@ -6,6 +6,7 @@
 import json
 import sys
 import time
+from collections import deque
 
 MAX_DEPTH = 6
 
@@ -195,6 +196,42 @@ class Board(object):
     (rows, cols) = (len(bitmap), len(bitmap[0]))
     new_bitmap = [row for row in bitmap if not all(row)]
     return [cols*[0] for i in range(rows - len(new_bitmap))] + new_bitmap
+
+SPACE_VALUE = -5
+FLAT_VALUE = -10
+
+def board_score(board):
+  MOVES = [[-1, 0], [1, 0], [0, 1], [0, -1]]
+  score = 0
+  rows = len(board.bitmap)
+  columns = len(board.bitmap[0])
+  visited = [[False] * columns] * rows
+  spaces = []
+  for r in range(rows):
+    for c in range(columns):
+      if not visited[c][r] and board.bitmap[c][r] == 0:
+        size = 0
+        queue = deque([(r, c)])
+        while not len(queue) = 0:
+          s = queue.popleft()
+          size += 1
+          for m in MOVES:
+            new_r = s[0] + m[0]
+            new_c = s[1] + m[1]
+            if 0 <= new_r < rows and 0 <= new_c < columns and not visited[new_r][new_c] and board.bitmap[new_r][new_c] == 0:
+              queue.append((new_r, new_c))
+              visited[new_r][new_c] = True
+        spaces.append(size)
+  spaces = sorted(spaces.sort)
+  spaces.pop()
+  for space in spaces:
+    score += SPACE_VALUE * math.sqrt(space)
+
+  heights = []
+  for c in range(columns):
+    r = 0
+    while board.bitmap[r][c]
+
 
 def search(board, block, preview, depth):
   if depth > MAX_DEPTH:
