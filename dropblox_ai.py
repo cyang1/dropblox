@@ -49,23 +49,6 @@ class Grid(list):
 class InvalidMoveError(ValueError):
   pass
 
- 
-def move_to_goal(piece(array of piece indices), goal):
-	piece coord = empty queue
-	for 1 to piecesize
-		start at left most
-		find shape of piece
-	for 1 to goalsize
-		start at leftmost
-		find shape of goalsize (U,L,D,R)
-	compare piece and goal
-	while piece shape not equal to goal shape, rotate
-	while center of piece x > goal x
-		move left
-	while center of piece x < goal x
-		move right
-	drop
-
 # A class representing an (i, j) position on a board.
 class Point(object):
   def __init__(self, i=0, j=0):
@@ -298,7 +281,23 @@ def moves_by_dropping(board, block):
   while begin_x < location_x:
     moves.append('right')
   return False
-
+  
+def rotate_oreo(piece, goal):
+#orients piece as needed
+	done = 0
+	moves = []
+	while done == 0:
+		for offset_p in piece.offsets:
+			exists = 0
+			for offset_g in goal.offsets:
+				if offset_p.i == offset_g.i and offset_p.j == offset_g.j:
+					exists = 1
+			if exists != 1:
+				moves.append('rotate')
+				break
+		if exists = 1:
+			done = 1
+	
 SPACE_VALUE = -10
 FLAT_VALUE = -5
 
