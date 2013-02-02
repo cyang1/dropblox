@@ -7,6 +7,8 @@ import json
 import sys
 import time
 
+MAX_DEPTH = 6
+
 class InvalidMoveError(ValueError):
   pass
 
@@ -194,6 +196,22 @@ class Board(object):
     new_bitmap = [row for row in bitmap if not all(row)]
     return [cols*[0] for i in range(rows - len(new_bitmap))] + new_bitmap
 
+def search(board, block, preview, depth):
+  if depth > MAX_DEPTH:
+    return board_score(board)
+  possible_moves = generate_moves(board, block, depth == 0)
+  max_score = 0
+  best_moves = []
+  for (new_board, move_list) in possible_moves:
+    score = search(new_board, preview[0], preview[1:], depth + 1)
+    if score > max_score:
+      max_score = score
+      best_moves = move_list
+  if depth == 0:
+    return best_moves
+  return max_score
+
+
 if __name__ == '__main__':
   if len(sys.argv) == 3:
     # This AI executable will be called with two arguments: a JSON blob of the
@@ -206,15 +224,20 @@ if __name__ == '__main__':
     # current block
     block = board.block
 
+    # next 5 blocks
+    preview = board.preview
+
     # very simple AI that moves the current block as far left as possible
-    moves = []                  # list of moves to make
-    while board.check(block):   # while the block in in a legal position
-      block.left()              # move the block left
-      moves.append('left')      # append a left command to oure moves list
-    if len(moves) > 0:          # remove that last left command, as it got the block into an illegal state
-      moves.pop()
-    for move in moves:          # print our moves
+    for move in search(board, block, preview, 0):
       print move
+    # moves = []                  # list of moves to make
+    # while board.check(block):   # while the block in in a legal position
+    #   block.left()              # move the block left
+    #   moves.append('left')      # append a left command to oure moves list
+    # if len(moves) > 0:          # remove that last left command, as it got the block into an illegal state
+    #   moves.pop()
+    # for move in moves:          # print our moves
+    #   print move
     sys.stdout.flush()          # flush stdout
 
 
