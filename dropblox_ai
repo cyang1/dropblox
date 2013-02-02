@@ -200,6 +200,15 @@ class Board(object):
 SPACE_VALUE = -10
 FLAT_VALUE = -5
 
+def piece_floating(board, block):
+  rows = len(board)
+  for s in block.squares():
+    if s.i == rows:
+      return False
+    elif not board[s.i + 1][s.j] == 0:
+      return False
+  return True
+
 def board_score(board):
   MOVES = [[-1, 0], [1, 0], [0, 1], [0, -1]]
   score = 0
