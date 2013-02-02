@@ -6,6 +6,9 @@
 import json
 import sys
 import time
+from collections import deque
+
+MAX_DEPTH = 6
 
 class Grid(list):
     def __init__(self, width, height, iterable=None):
@@ -279,6 +282,75 @@ def moves_by_dropping(board, block):
     moves.append('right')
   return False
 
+SPACE_VALUE = -10
+FLAT_VALUE = -5
+
+def piece_floating(board, block):
+  rows = len(board)
+  for s in block.squares():
+    if s.i == rows:
+      return False
+    elif not board[s.i + 1][s.j] == 0:
+      return False
+  return True
+
+def board_score(board):
+  MOVES = [[-1, 0], [1, 0], [0, 1], [0, -1]]
+  score = 0
+  rows = len(board.bitmap)
+  columns = len(board.bitmap[0])
+  visited = [[False] * columns] * rows
+  spaces = []
+  for r in range(rows):
+    for c in range(columns):
+      if not visited[c][r] and board.bitmap[c][r] == 0:
+        size = 0
+        queue = deque([(r, c)])
+        while not len(queue) = 0:
+          s = queue.popleft()
+          size += 1
+          for m in MOVES:
+            new_r = s[0] + m[0]
+            new_c = s[1] + m[1]
+            if 0 <= new_r < rows and 0 <= new_c < columns and not visited[new_r][new_c] and board.bitmap[new_r][new_c] == 0:
+              queue.append((new_r, new_c))
+              visited[new_r][new_c] = True
+        spaces.append(size)
+  spaces = sorted(spaces.sort)
+  spaces.pop()
+  for space in spaces:
+    score += SPACE_VALUE * math.sqrt(space)
+
+  heights = []
+  for c in range(columns):
+    r = 0
+    while board.bitmap[r][c] == 0 and r < rows:
+      r += 1
+    heights.append(r)
+  avg = sum(heights) * 1.0 / len(heights)
+  variance = 0
+  for h in heights:
+    variance += (avg - h) * (avg - h)
+  score += FLAT_VALUE * variance / 100.0
+  return score
+
+
+def search(board, block, preview, depth):
+  if depth > MAX_DEPTH:
+    return board_score(board)
+  possible_moves = generate_moves(board, block, depth == 0)
+  max_score = 0
+  best_moves = []
+  for (new_board, move_list) in possible_moves:
+    score = search(new_board, preview[0], preview[1:], depth + 1)
+    if score > max_score:
+      max_score = score
+      best_moves = move_list
+  if depth == 0:
+    return best_moves
+  return max_score
+
+
 
 if __name__ == '__main__':
   if len(sys.argv) == 3:
@@ -292,7 +364,12 @@ if __name__ == '__main__':
     # current block
     block = board.block
 
+    # next 5 blocks
+    preview = board.preview
+
     # very simple AI that moves the current block as far left as possible
+    # for move in search(board, block, preview, 0):
+    #   print move
     moves = []                  # list of moves to make
     while board.check(block):   # while the block in in a legal position
       block.left()              # move the block left
