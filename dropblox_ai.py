@@ -297,6 +297,7 @@ def rotate_oreo(piece, goal):
 				break
 		if exists = 1:
 			done = 1
+	return False
 	
 SPACE_VALUE = -10
 FLAT_VALUE = -5
