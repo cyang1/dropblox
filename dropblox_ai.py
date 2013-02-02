@@ -265,22 +265,52 @@ def generate_positions(board, make_moves=True):
       # check if squares collide
       if board.check(block):
         doesnt_fail.append((block.rotation, row, col))
-      # check if piece floats
-
+      # check if i can get the block there
     block.rotate()
 
   return doesnt_fail # these are (rotation, row, col)
 
-def moves_by_dropping(board, block):
-  # move center to location
-  begin_x, begin_y = 0, 0
-  location_x, location_y = 0, 0
+def positions_by_dropping(board, block, generate_moves=True):
+  def block_copy():
+    return Block(block.center, block.offsets)
+  move = []
+  while board.check(block):
+    block.left()
+    move.append('left')
+  if len(move) > 0:
+    block.right()
+    move.pop()
+  # now all the way to the left
+  # move to each column possible and all possible rotations
   moves = []
-  while begin_x > location_x:
-    moves.append('left')
-  while begin_x < location_x:
-    moves.append('right')
-  return False
+  while board.check(block):
+    for i in range(4):
+      moves.append(move[:])
+      block.rotate()
+      move.append('rotate')
+    block.right()
+    move.append('right')
+  if len(move) > 0:
+    block.left()
+    move.pop()
+
+  boards = []
+  print move
+  for thing in moves:
+    b = block_copy().do_commands(thing)
+    while board.check(block):
+      b.down()
+      thing.append('down')
+    if len(thing) > 0:
+      b.up()
+      thing.pop()
+    # where is the block?
+    board.block = b
+    boards.append(board.place())
+
+  print boards
+  print moves
+  return zip(boards, moves)
 
 SPACE_VALUE = -10
 FLAT_VALUE = -5
@@ -306,7 +336,7 @@ def board_score(board):
       if not visited[c][r] and board.bitmap[c][r] == 0:
         size = 0
         queue = deque([(r, c)])
-        while not len(queue) = 0:
+        while not len(queue) == 0:
           s = queue.popleft()
           size += 1
           for m in MOVES:
@@ -338,7 +368,7 @@ def board_score(board):
 def search(board, block, preview, depth):
   if depth > MAX_DEPTH:
     return board_score(board)
-  possible_moves = generate_moves(board, block, depth == 0)
+  possible_moves = positions_by_dropping(board, block, depth == 0)
   max_score = 0
   best_moves = []
   for (new_board, move_list) in possible_moves:
@@ -349,6 +379,21 @@ def search(board, block, preview, depth):
   if depth == 0:
     return best_moves
   return max_score
+
+def random_moves(board, block):
+  from random import choice
+  moves = ['rotate']
+  go = choice(range(12))
+  while go - 6 > 0:
+    moves.append('left')
+    block.left()
+    go -= 1
+  while go - 6 < 0:
+    moves.append('right')
+    block.right()
+    go += 1
+
+  return moves
 
 
 
@@ -368,8 +413,9 @@ if __name__ == '__main__':
     preview = board.preview
 
     # very simple AI that moves the current block as far left as possible
-    # for move in search(board, block, preview, 0):
-    #   print move
+    for thing in random_moves(board, block):
+      print thing
+    """
     moves = []                  # list of moves to make
     while board.check(block):   # while the block in in a legal position
       block.left()              # move the block left
@@ -379,7 +425,7 @@ if __name__ == '__main__':
     for move in moves:          # print our moves
       print move
     sys.stdout.flush()          # flush stdout
-
+    """
 
     # this will do the same thing, but with different helper methods
     #while block.checked_left(board):
