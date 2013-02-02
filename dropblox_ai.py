@@ -7,6 +7,42 @@ import json
 import sys
 import time
 
+class Grid(list):
+    def __init__(self, width, height, iterable=None):
+        if iterable is None:
+            iterable = [None] * (width * height)
+        assert(len(iterable) == width * height)
+        super().__init__(iterable)
+        self.width = width
+        self.height = height
+
+    def __getitem__(self, index):
+        if type(index) == int:
+            return super().__getitem__(index)
+        row, col = index
+        return self[row * self.width + col]
+
+    def __setitem__(self, index, value):
+        if type(index) == int:
+            return super().__setitem__(index, value)
+        row, col = index
+        self[row * self.width + col] = value
+        return value
+
+    def __str__(self):
+        out = ""
+        for row in range(self.height):
+            for col in range(self.width):
+                if self[row, col] is None:
+                    out += ' ? '
+                else:
+                    out += ' {} '.format(self[row, col])
+            out += '\n'
+        return out + '\n'
+
+    def __hash__(self):
+        return hash(tuple(self))
+
 class InvalidMoveError(ValueError):
   pass
 
@@ -15,6 +51,9 @@ class Point(object):
   def __init__(self, i=0, j=0):
     self.i = i
     self.j = j
+
+  def __hash__(self):
+    return hash((self.i, self.j))
 
 # A class representing a Block object.
 class Block(object):
@@ -193,6 +232,53 @@ class Board(object):
     (rows, cols) = (len(bitmap), len(bitmap[0]))
     new_bitmap = [row for row in bitmap if not all(row)]
     return [cols*[0] for i in range(rows - len(new_bitmap))] + new_bitmap
+
+def flatten(nested_list):
+  return reduce(lambda acc, l: acc.extend(l), nested_list, [])
+
+def generate_positions(board, make_moves=True):
+  """returns a list of tuples (board, moves to get to that board)
+  if make_moves is false, moves to get to that board will be None"""
+  # for each column, find the rows that are not occupied.
+  free_spaces_to_check = []
+  for col in xrange(12):
+    empty_rows_below = 0
+    for row in xrange(32, -1, -1): # 32..0
+      if board.bitmap[row][col] == 0: # empty
+        if empty_rows_below <= 3:
+          free_spaces_to_check.append((row, col))
+        empty_rows_below += 1
+      else:
+        empty_rows_below = 0
+
+  block = Block(board.block.center, board.block.offsets)
+
+  doesnt_fail = []
+
+  # match each rotation of the block to the board
+  for i in range(3):
+    for row, col in free_spaces_to_check:
+      block.center = Point(row, col)
+      # check if squares collide
+      if board.check(block):
+        doesnt_fail.append((block.rotation, row, col))
+      # check if piece floats
+
+    block.rotate()
+
+  return doesnt_fail # these are (rotation, row, col)
+
+def moves_by_dropping(board, block):
+  # move center to location
+  begin_x, begin_y = 0, 0
+  location_x, location_y = 0, 0
+  moves = []
+  while begin_x > location_x:
+    moves.append('left')
+  while begin_x < location_x:
+    moves.append('right')
+  return False
+
 
 if __name__ == '__main__':
   if len(sys.argv) == 3:
