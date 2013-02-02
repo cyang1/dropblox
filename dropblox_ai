@@ -197,8 +197,8 @@ class Board(object):
     new_bitmap = [row for row in bitmap if not all(row)]
     return [cols*[0] for i in range(rows - len(new_bitmap))] + new_bitmap
 
-SPACE_VALUE = -5
-FLAT_VALUE = -10
+SPACE_VALUE = -10
+FLAT_VALUE = -5
 
 def board_score(board):
   MOVES = [[-1, 0], [1, 0], [0, 1], [0, -1]]
@@ -230,7 +230,15 @@ def board_score(board):
   heights = []
   for c in range(columns):
     r = 0
-    while board.bitmap[r][c]
+    while board.bitmap[r][c] == 0 and r < rows:
+      r += 1
+    heights.append(r)
+  avg = sum(heights) * 1.0 / len(heights)
+  variance = 0
+  for h in heights:
+    variance += (avg - h) * (avg - h)
+  score += FLAT_VALUE * variance / 100.0
+  return score
 
 
 def search(board, block, preview, depth):
